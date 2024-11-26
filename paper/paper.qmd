@@ -2,7 +2,7 @@
 title: "Understanding Traffic Patterns and Median Speeds: Insights from Toronto’s Speed Display Program"
 subtitle: "Northbound and Southbound Traffic Show Higher Speeds; High-Speed Vehicles Raise Median Speeds"
 author: Xingjie Yao
-thanks: "Code and data are available at: [https://github.com/RohanAlexander/starter_folder](https://github.com/RohanAlexander/starter_folder)."
+thanks: "Code and data are available at: [https://github.com/Stella41603/Toronto-Speeding-Analysis.git](https://github.com/Stella41603/Toronto-Speeding-Analysis.git)."
 date: today
 date-format: long
 abstract: "This study investigates how traffic direction and high-speed vehicles affect median speeds at locations with speed display signs in Toronto. Northbound and Southbound traffic showed higher median speeds than Eastbound, and more high-speed vehicles raised the median speed. These findings highlight how road design and driver behavior influence traffic patterns. The results inform strategies to improve road safety by addressing high-speed driving and targeting high-risk areas."
@@ -17,6 +17,7 @@ bibliography: references.bib
 #| message: false
 
 library(tidyverse)
+library(arrow)
 ```
 
 
@@ -72,10 +73,10 @@ The count of vehicles exceeding 100 km/h serves as another critical predictor, r
 
 ```{r}
 #| label: fig-bound
-#| fig-cap: The distribution of the median speeds, measured in kilometers per hour (km/h), for vehicles traveling in each cardinal direction (Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB)) at monitored locations during the installation of traffic signs.
 #| echo: false
 #| warning: false
 #| message: false
+#| fig-cap: The distribution of the median speeds, measured in kilometers per hour (km/h), for vehicles traveling in each cardinal direction Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB), at monitored locations during the installation of traffic signs.
 
 analysis_data <- read_parquet(here::here("data/02-analysis_data/analysis_data.parquet"))
 
@@ -93,7 +94,7 @@ ggplot(analysis_data, aes(x = direction, y = pct_50, fill = direction)) +
 
 ```{r}
 #| label: fig-speeding
-#| fig-cap: Illustrating the relationship between the count of vehicles observed exceeding 100 km/h and the median speed, measured in kilometers per hour (km/h), for each cardinal direction: Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB).
+#| fig-cap: Illustrating the relationship between the count of vehicles observed exceeding 100 km/h and the median speed, measured in kilometers per hour, for each cardinal direction, Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB).
 #| echo: false
 #| warning: false
 #| message: false
