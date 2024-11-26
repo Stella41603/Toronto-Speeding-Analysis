@@ -1,0 +1,347 @@
+---
+title: "Understanding Traffic Patterns and Median Speeds: Insights from Toronto’s Speed Display Program"
+subtitle: "Northbound and Southbound Traffic Show Higher Speeds; High-Speed Vehicles Raise Median Speeds"
+author: Xingjie Yao
+thanks: "Code and data are available at: [https://github.com/RohanAlexander/starter_folder](https://github.com/RohanAlexander/starter_folder)."
+date: today
+date-format: long
+abstract: "This study investigates how traffic direction and high-speed vehicles affect median speeds at locations with speed display signs in Toronto. Northbound and Southbound traffic showed higher median speeds than Eastbound, and more high-speed vehicles raised the median speed. These findings highlight how road design and driver behavior influence traffic patterns. The results inform strategies to improve road safety by addressing high-speed driving and targeting high-risk areas."
+format: pdf
+number-sections: true
+bibliography: references.bib
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+```
+
+
+# Introduction
+
+Speed-related traffic accidents are a major concern in urban areas, prompting cities to explore interventions such as speed display signs to encourage safer driving behavior. The Mobile Watch Your Speed Program (WYSP) in Toronto rotates radar-equipped signs across various locations to remind drivers of their speeds and promote compliance with posted limits. Despite the program’s widespread use, the impact of these installations on traffic speed patterns has not been thoroughly analyzed. This paper investigates the relationship between traffic direction, high-speed vehicle prevalence, and median driving speeds at WYSP locations. By leveraging a Bayesian linear regression model, we aim to uncover patterns that can inform traffic management policies and improve road safety.
+
+The primary estimand of interest is the conditional average of median speed observed at each sign installation given two predictors: traffic direction (categorized as Eastbound, Northbound, Southbound, and Westbound) and the count of vehicles exceeding 100 km/h at the same location. The median speed serves as a summary measure of central driving tendencies, while traffic direction and high-speed vehicle counts provide explanatory variables to capture both structural and behavioral factors influencing speed. The analysis seeks to quantify how these factors shape typical driving behavior at monitored locations.
+
+The analysis reveals that traffic direction significantly influences median speed. Compared to Eastbound traffic, Northbound and Southbound directions exhibit higher median speeds, suggesting potential differences in road characteristics, flow, or traffic patterns. In contrast, Westbound traffic shows a slight reduction in median speed relative to Eastbound traffic. Additionally, the count of vehicles exceeding 100 km/h is positively associated with median speed, with each additional high-speed vehicle contributing incrementally to the overall median. The Bayesian model, using weakly informative priors, provides robust estimates that align with observed patterns, explaining approximately 12.9% of the variation in median speeds. These findings highlight the combined effects of structural (directional) and behavioral (high-speed driving) factors on traffic dynamics.
+
+Understanding how traffic direction and high-speed behavior affect median speed has direct implications for traffic safety and urban planning. These findings can guide policymakers in targeting specific road segments with higher observed speeds for interventions, such as additional signage or enforcement. Moreover, the results underscore the importance of addressing high-speed driving, as even a small number of speeding vehicles can substantially influence overall traffic flow. By identifying patterns and predictors of median speed, this study contributes to a growing body of evidence that supports data-driven approaches to improving road safety. The insights gained from this research not only enhance the evaluation of programs like WYSP but also provide actionable recommendations for broader traffic management strategies.
+
+The remainder of this paper is organized as follows. @sec-data provides an overview of the data sources and key variables used in our analysis, offering a detailed description of the Mobile Watch Your Speed Program (WYSP) dataset. @sec-model outlines the Bayesian linear regression framework used to explore the relationship between these variables. @sec-results presents the findings, highlighting the factors that influence median vehicle speeds and exploring how traffic direction and the frequency of speeding contribute to observed patterns. @sec-discussion interprets the broader implications of the findings, particularly in the context of traffic safety and speed compliance. 
+
+# Data {#sec-data}
+
+## Overview
+
+For this analysis, we used the `R` programming language [@citeR] to explore data from the Mobile Watch Your Speed Program (WYSP) – Speed Summary in Toronto. The dataset, sourced from Toronto’s Open Data Portal [@opendatatoronto; @toronto_mobile_wysp], provides a summary of vehicle speeds observed at temporary speed display sign installations across the city. These signs are part of an initiative to remind motorists to obey speed limits by displaying their real-time speeds. Key aspects analyzed include the median speed observed during each installation, the count of vehicles exceeding 100 km/h, and the cardinal direction of traffic flow.
+
+A variety of `R` packages were employed to streamline data manipulation, modeling, and visualization. The `tidyverse` suite served as the backbone for data processing, enabling efficient and reproducible workflows [@tidyverse]. File management was handled with `here`, ensuring consistent and reliable dataset access [@citehere]. Data cleaning was facilitated by `janitor`, which prepared the dataset for analysis [@citejanitor], while `testthat` validated the simulated and processed datasets, ensuring workflow integrity [@testthat]. Bayesian modeling, conducted using `rstanarm`, provided robust inference and clear probabilistic interpretations [@rstanarm]. Model summaries were generated with `modelsummary` for concise, intuitive reporting [@modelsummary]. Additionally, `arrow` ensured fast and memory-efficient handling of the dataset, critical for its scale and complexity [@citearrow]. Best practices in workflow organization, as outlined in @tellingstories, ensured transparency and reproducibility, integrating data cleaning, modeling, and visualization into a unified pipeline. This structured approach allowed for meaningful insights while supporting validation and future research extensions.
+
+The dataset, sourced from Toronto’s Open Data Portal, underwent extensive cleaning to ensure its suitability for analysis. Key variables, such as the median speed (50th percentile), the count of vehicles exceeding 100 km/h, and the direction of travel, were retained, while irrelevant fields were excluded to streamline the dataset. Observations with missing or incomplete data were removed to uphold consistency and accuracy. Although alternative datasets, such as detailed hourly speed counts, were available, the WYSP summary dataset was selected for its clarity and direct relevance to evaluating driver compliance with speed limits. This focused dataset offered a concise yet comprehensive overview of observed speed patterns, supporting the analysis of program effectiveness. The rigorous cleaning process ensured that the dataset was well-prepared for modeling and interpretation, enabling a reliable assessment of how WYSP sign installations influence vehicle speeds and driver behavior.
+
+## Measurement
+	
+The dataset from the Mobile Watch Your Speed Program (WYSP) represents a systematic effort to capture real-world driving behaviors and translate them into structured data for analysis. This process begins with the installation of speed display signs, which are portable devices equipped with radar technology and LED screens. These signs are mounted on existing infrastructure, such as hydro poles or streetlights, and measure the speed of oncoming vehicles. The radar records the speed, and the LED display shows it to drivers in real time, encouraging them to adhere to the posted speed limits. The act of vehicles traveling past these signs, with their speeds being detected and displayed, forms the raw phenomenon in the real world that is subsequently recorded in the dataset.
+
+The radar device captures each vehicle's speed as a numeric value, and these measurements are aggregated into summary statistics such as the median speed and the count of vehicles exceeding 100 km/h. Each installation is associated with a specific location, date, and direction of traffic flow (e.g., Eastbound, Northbound), creating a comprehensive record of speed observations at that site. These data points are then uploaded and organized by the city into a structured dataset. This transformation process converts individual speed measurements into summarized and standardized entries, making it possible to analyze patterns across different locations and time periods.
+
+The dataset reflects not only the behavior of drivers but also the operational parameters of the program. For example, the mobile signs are rotated across Toronto’s wards on a monthly basis, ensuring broad coverage and diverse data collection. This systematic rotation is documented in the dataset, linking speed summaries to specific sign installations and the conditions under which they were observed. The inclusion of these operational details adds context to the speed data, allowing analysts to account for factors such as location-specific road conditions or seasonal variations in driver behavior.
+
+However, there are limitations to this process that must be acknowledged. The dataset only includes data from installations where the mobile sign has been removed, meaning ongoing installations are excluded. Furthermore, the count of vehicles exceeding 100 km/h should not be interpreted as a total traffic volume count, as the dataset is limited to vehicles detected by the radar and does not include undetected traffic. Despite these constraints, the dataset provides a valuable representation of driver compliance with speed limits, offering insights into how temporary interventions like speed display signs influence behavior. This transformation from real-world phenomena to structured data highlights the importance of systematic measurement and the challenges of capturing human behavior in quantifiable terms. Additional details are given in [Appendix -@sec-survey-details].
+
+## Outcome variable
+
+The outcome variable in this analysis is the median speed observed at each location where the speed display signs were installed. This variable represents the typical speed of vehicles passing the radar-equipped signs and provides a summary measure of driver behavior at that site. By focusing on the median speed, the analysis captures a central tendency that is less influenced by extreme outliers, offering a reliable indication of how most drivers behave under the influence of speed display signs.
+
+## Predictor variables
+
+### Cardinal direction of travel
+
+The direction of travel, categorized as Eastbound, Northbound, Southbound, or Westbound, is a key predictor in this analysis. Traffic direction reflects potential variations in road conditions, traffic volume, and environmental factors that may influence driver behavior. For instance, certain directions might correspond to busier thoroughfares, residential streets, or roads with differing speed limits, all of which could affect median speeds. Including direction as a predictor allows the analysis to account for these geographic and logistical variations.
+
+### Count of vehicles exceeding 100km/h
+
+The count of vehicles exceeding 100 km/h serves as another critical predictor, reflecting the prevalence of excessive speeding at each location. This variable captures high-risk driving behavior, which is a major concern for road safety. By examining the relationship between the count of speeding vehicles and the median speed, the analysis investigates whether locations with frequent speeding incidents also exhibit higher overall driving speeds or distinct behavioral patterns. This variable provides valuable insight into the extent and impact of speeding on typical traffic behavior.
+
+## Relationship between variables
+
+@fig-bound presents the median speeds of vehicles across four cardinal directions: Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB). The median speeds appear relatively consistent across directions, with minor variations. Northbound (NB) and Southbound (SB) directions exhibit slightly broader interquartile ranges compared to Eastbound (EB) and Westbound (WB), indicating greater variability in vehicle speeds. Outliers in all directions represent occasional instances of vehicles traveling at either extremely low or high speeds, potentially influenced by traffic conditions or local environmental factors. These findings provide insights into directional trends in traffic flow and support the evaluation of speed limit sign effectiveness in managing vehicle speeds. The analysis complements a separate examination of high-speed violations, quantified as the count of vehicles observed exceeding 100 km/h at these locations.
+
+```{r}
+#| label: fig-bound
+#| fig-cap: The distribution of the median speeds, measured in kilometers per hour (km/h), for vehicles traveling in each cardinal direction (Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB)) at monitored locations during the installation of traffic signs.
+#| echo: false
+#| warning: false
+#| message: false
+
+analysis_data <- read_parquet(here::here("data/02-analysis_data/analysis_data.parquet"))
+
+ggplot(analysis_data, aes(x = direction, y = pct_50, fill = direction)) +
+  geom_boxplot() +
+  labs(
+    x = "Direction",
+    y = "Median speed (km/h)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+@fig-speeding shows how the count of vehicles exceeding 100 km/h correlates with the median speed observed at various locations, grouped by traffic direction. The majority of locations cluster around moderate counts of speeding vehicles (below 100) and median speeds between 40 and 60 km/h. However, a few outliers with higher counts of speeding vehicles (above 300) or extreme median speeds suggest localized conditions, such as high-speed corridors or unique traffic environments. The directional grouping reveals no obvious separation in trends across Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB), suggesting that speeding patterns are relatively uniform across directions. This analysis highlights the interplay between speeding behaviors and overall traffic flow characteristics, providing critical information for targeting interventions to improve traffic safety.
+
+```{r}
+#| label: fig-speeding
+#| fig-cap: Illustrating the relationship between the count of vehicles observed exceeding 100 km/h and the median speed, measured in kilometers per hour (km/h), for each cardinal direction: Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB).
+#| echo: false
+#| warning: false
+#| message: false
+
+ggplot(analysis_data, aes(x = spd_100_and_above, y = pct_50, color = direction)) +
+  geom_point(size = 2, alpha = 0.4) +
+  labs(
+    x = "Count of Vehicles Over 100 km/h",
+    y = "50th Percentile Speed (km/h)",
+    color = "Direction"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+
+# Model {#sec-model}
+
+The goal of our modeling strategy is twofold. Firstly, we aim to understand the factors influencing the median speed of vehicles at locations where speed display signs were installed. Secondly, we seek to quantify the relationships between median speed and key predictors such as traffic direction and the count of vehicles exceeding 100 km/h. Here, we describe the Bayesian linear regression model used to investigate these relationships. Background details, including diagnostic checks, are provided in [Appendix -@sec-model-details].
+
+## Model set-up
+
+Define $y_i$ as the median speed (in $\mathrm{km} / \mathrm{h}$ ) observed at location $i$. The predictors are $x_{1 i}$, the count of vehicles exceeding 100 km/h, and $x_{2 i}$, the traffic direction. Traffic direction is included as a set of dummy variables with Eastbound (EB) as the reference group. The model is specified as:
+
+$$
+\begin{gathered}
+y_i \mid \mu_i, \sigma \sim \operatorname{Normal}\left(\mu_i, \sigma\right) \\
+\mu_i=\alpha+\beta_1 x_{1 i}+\gamma_1 \mathrm{NB}_i+\gamma_2 \mathrm{SB}_i+\gamma_3 \mathrm{WB}_i \\
+\alpha \sim \operatorname{Normal}(0,2.5) \\
+\beta_1 \sim \operatorname{Normal}(0,2.5) \\
+\gamma_1, \gamma_2, \gamma_3 \sim \operatorname{Normal}(0,2.5) \\
+\sigma \sim \operatorname{Exponential}(1)
+\end{gathered}
+$$
+
+Here, $\alpha$ represents the intercept (the expected median speed for Eastbound traffic when $x_{1 i}=0$ and the count of vehicles exceeding 100 km/h us 0), $\beta_1$ is the effect of the count of vehicles exceeding 100 km/h, and $\gamma_1, \gamma_2, \gamma_3$ are the effects of Northbound (NB), Southbound (SB), and Westbound (WB) directions compared to Eastbound (EB). The residual standard deviation $\sigma$ models the variability in the median speed unexplained by the predictors. These priors are weakly informative, centered at zero with modest variance, allowing the data to dominate the posterior estimates while discouraging extreme values.
+
+We implemented the model in `R` [@citeR] using the rstanarm package [@rstanarm]. The default priors from `rstanarm` were used for all parameters, as described above, to ensure consistency and interpretability.
+
+### Model justification
+
+Bayesian linear regression is well-suited for analyzing the continuous outcome of median speed, especially given its flexibility to incorporate prior information and quantify uncertainty in parameter estimates. Traffic direction is modeled using dummy variables to allow for direct comparison between the baseline (Eastbound) and other directions. This approach accounts for potential differences in road conditions, traffic patterns, or design features that vary by direction. The count of vehicles exceeding 100 km/h is included as a continuous predictor, hypothesized to positively correlate with median speed as locations with more speeding vehicles may also exhibit higher central tendencies in speed. The use of weakly informative priors ensures that the model is guided primarily by the observed data, providing robust and interpretable results while mitigating overfitting or extreme parameter estimates. This framework allows for a nuanced understanding of the factors shaping driver behavior across various locations and conditions.
+
+# Results {#sec-results}
+
+Our results are summarized in @tbl-modelresults. The results of the Bayesian linear regression model provide insights into the factors influencing the median speed of vehicles at locations where speed display signs were installed. The intercept of 38.77 indicates that, on average, the median speed for Eastbound (EB) traffic is approximately 38.8 km/h when the count of vehicles exceeding 100 km/h is zero. This serves as the baseline for comparison with other directions.
+
+The coefficients for traffic direction reveal notable differences relative to the Eastbound (EB) group. Northbound (NB) traffic has a higher median speed by 0.93 km/h, while Southbound (SB) traffic shows an even greater increase of 1.12 km/h. Conversely, Westbound (WB) traffic demonstrates a slight decrease of 0.33 km/h in the median speed compared to Eastbound traffic. These directional variations may reflect differences in road conditions, traffic flow, or environmental factors associated with specific routes.
+
+The count of vehicles exceeding 100 km/h (spd_100_and_above) has a positive and significant association with the median speed, with an estimated coefficient of 0.09 . This indicates that for every additional vehicle exceeding 100 km/h the median speed increases by 0.09 km/h, highlighting the influence of high-speed outliers on overall traffic behavior.
+
+The model explains approximately 12.9% of the variance in median speeds ( $R^2=0.129$ ), with an adjusted $R^2$ of 12.9%, indicating a modest but meaningful level of explanatory power. The root mean square error (RMSE) of 9.45 km/h suggests that the model's predictions deviate from the observed values by an average of about 9.45 km/h, reflecting some residual variability not captured by the predictors.
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+library(rstanarm)
+
+first_model <-
+  readRDS(file = here::here("models/first_model.rds"))
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: tbl-modelresults
+#| tbl-cap: "Explanatory models of median speed based on direction of travel and count of vehicles over 100 km/h"
+#| warning: false
+#| message: false
+
+modelsummary::modelsummary(
+  list(
+    "First model" = first_model
+  ),
+  statistic = "mad",
+  fmt = 2
+)
+```
+
+# Discussion {#sec-discussion}
+
+## Median speed and traffic patterns  
+
+The analysis reveals significant influences of traffic direction and high-speed vehicle prevalence on median driving speeds at locations equipped with speed display signs. Specifically, Northbound and Southbound traffic exhibit higher median speeds compared to Eastbound traffic, which serves as the reference group. This directional variation may stem from structural or environmental factors such as road design, traffic management, or variations in vehicle flow patterns. For instance, Northbound and Southbound roads might feature fewer stoplights, intersections, or other obstructions, enabling smoother and faster travel. Additionally, these differences could reflect localized traffic dynamics, such as variations in commuter routes, terrain, or nearby land use, all of which can shape driving behavior. The finding underscores the importance of considering directional traffic patterns when analyzing speed behavior and designing traffic interventions.
+
+Further, the analysis shows a clear relationship between the count of vehicles exceeding 100 km/h and the overall median speed at a location. Locations with a higher prevalence of speeding vehicles tend to have elevated median speeds, suggesting that the presence of high-speed drivers significantly shapes the typical speed profile. This relationship emphasizes that excessive speeding, even if exhibited by a subset of drivers, has a measurable effect on the broader traffic flow. Together, these results illustrate the interplay between high-speed outliers and directional traffic characteristics, providing a more nuanced understanding of median speed patterns at different locations.
+
+## Impact of high-speed drivers on median speed
+
+The strong association between high-speed driving behavior and median speed highlights the outsized influence that a relatively small number of speeding vehicles can have on overall traffic patterns. For every additional vehicle exceeding 100 km/h, the median speed increases slightly, reflecting how high-speed outliers skew the central tendency. This incremental effect underscores the cumulative impact of excessive speeding, particularly in locations where such behavior is frequent. As high-speed vehicles raise the median speed, they also contribute to heightened risks for all road users, reinforcing the need for targeted interventions.
+
+From a policy perspective, these findings suggest that reducing the incidence of excessive speeding could have cascading benefits for overall speed compliance and traffic safety. Measures such as speed display signs, law enforcement, or physical traffic calming strategies can serve as effective tools to curb high-speed driving behavior. Additionally, public awareness campaigns that emphasize the dangers of excessive speeding might amplify the effectiveness of these interventions. By addressing the root cause of high-speed behavior, traffic safety programs can mitigate its ripple effects, lowering both median speeds and the likelihood of speed-related accidents.
+
+## Relevance to traffic safety and policy
+
+The study’s findings hold practical relevance for policymakers, transportation planners, and law enforcement agencies striving to enhance road safety. Differences in median speeds across traffic directions highlight the need for tailored interventions that account for the unique characteristics of each direction. For example, Northbound and Southbound roads with higher observed speeds may warrant additional signage, stricter enforcement, or modifications to road geometry, such as narrowing lanes or adding speed humps, to encourage compliance with speed limits. These directional insights provide actionable guidance for targeted improvements to traffic management practices.
+
+Moreover, the strong relationship between the count of high-speed vehicles and median speed underscores the importance of prioritizing locations where excessive speeding is prevalent. By focusing enforcement and resources on these high-risk areas, policymakers can maximize the impact of their efforts to reduce speeds and improve compliance. The broader implication is that addressing high-speed driving is not just about individual behavior—it has systemic effects on traffic flow and road safety. These findings contribute to a growing body of evidence supporting data-driven approaches to traffic safety, ensuring that interventions are both effective and resource-efficient.
+
+## Weaknesses and next steps
+
+While the analysis provides valuable insights into traffic speed patterns, it is not without limitations. One primary limitation is the reliance on summary statistics for speed display sign installations, which omits detailed information on hourly variations, total traffic volume, or vehicle classifications. These omissions restrict the ability to contextualize high-speed behavior relative to the overall traffic population, leaving room for additional explanatory factors to be considered. For instance, temporal trends, such as peak-hour versus off-peak traffic, could reveal critical dynamics not captured in the current dataset.
+
+Another limitation is the use of traffic direction as a categorical predictor, which may oversimplify the underlying complexities associated with directional differences. Factors such as road width, speed limit enforcement, or nearby land use could further illuminate why certain directions exhibit higher median speeds. Future studies could incorporate these variables to better account for the heterogeneity in traffic behavior. Additionally, expanding the dataset to include more granular data, such as hourly speed distributions, total vehicle counts, or weather conditions, would enable a deeper and more comprehensive analysis.
+
+Next steps for research could include exploring the interaction between high-speed driving and environmental factors, such as road conditions or visibility. Furthermore, integrating qualitative insights, such as surveys of driver behavior or attitudes, could complement the quantitative findings, offering a richer understanding of the mechanisms driving speeding behavior. By addressing these limitations and expanding the scope of inquiry, future studies can build on the current findings to support more robust, targeted, and effective traffic safety interventions.
+
+\newpage
+
+\appendix
+
+# Appendix {-}
+
+# Additional data details
+
+# Model details {#sec-model-details}
+
+## Posterior predictive check
+
+In @fig-ppcheckandposteriorvsprior-1, we implement a posterior predictive check to evaluate how well the model reproduces the observed data. The observed median speed distribution is shown as a thick, dark line, while the lighter lines represent simulated predictions from the posterior distribution. The alignment between the observed and predicted distributions indicates that the model adequately captures the central tendencies and variability of the data, though some deviations in tails might suggest areas for improvement.
+
+In @fig-ppcheckandposteriorvsprior-2, we compare the posterior distributions (right panel) with the prior distributions (left panel) for the model parameters. The posterior distributions for the directional effects and the count of vehicles exceeding 100 km/h  are narrower and shifted compared to the priors, demonstrating that the data strongly informs these parameters. The intercept and residual variance $(\sigma)$ are similarly influenced by the data, indicating meaningful updates from the prior assumptions to reflect observed patterns. This comparison highlights the balance between prior information and data-driven inference in the Bayesian framework.
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-ppcheckandposteriorvsprior
+#| layout-ncol: 2
+#| fig-cap: "Examining how the model fits, and is affected by, the data"
+#| fig-subcap: ["Posterior prediction check compares the observed data with predictions simulated from the model to evaluate the adequacy of fit.", "Comparison of posterior distributions with prior distributions illustrates how the data informs the parameter estimates."]
+
+pp_check(first_model) +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+posterior_vs_prior(first_model) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom") +
+  coord_flip()
+```
+
+## Diagnostics
+
+@fig-stanareyouokay-1 is a trace plot. It shows the sampling chains for each parameter in the model over 1,000 iterations. Each parameter (e.g., intercept, direction, count of vehicles over 100 km/h, and residual variance) has multiple chains visualized, with different shades representing the chains. The overlapping and consistent patterns across chains suggest that the Markov Chain Monte Carlo (MCMC) algorithm has mixed well and reached convergence. The lack of significant drift or divergence indicates reliable and stable parameter estimates.
+
+@fig-stanareyouokay-2 is an Rhat plot. It shows the Gelman-Rubin diagnostic for each parameter, which compares the variance within and between chains. All Rhat values are close to 1, confirming that the chains have converged and that the model's posterior distribution is well-sampled. This suggests that the MCMC algorithm has performed adequately and the parameter estimates are robust and reliable.
+
+```{r}
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| label: fig-stanareyouokay
+#| fig-cap: "Checking the convergence of the MCMC algorithm"
+#| fig-subcap: ["Trace plot showing consistent sampling across multiple chains for all model parameters, suggesting convergence.", "Rhat plot indicating that all parameters have Rhat values close to 1, confirming proper mixing and convergence of the chains."]
+#| layout-ncol: 2
+
+plot(first_model, "trace")
+
+plot(first_model, "rhat")
+```
+
+# Survey overview and methodology {#sec-survey-details}
+
+**Introduction**
+
+Accurate traffic speed monitoring is crucial for enhancing road safety, informing policy decisions, and optimizing urban planning. The City of Toronto's Mobile Watch Your Speed Program (Mobile WYSP) employs speed display signs equipped with radar devices and LED displays to monitor and influence vehicular speeds. This exploration delves into the sampling methodology of the Mobile WYSP, examining how observational data is collected, the strengths and limitations of the current approach, and potential enhancements to improve data reliability and representativeness.
+
+**Observational Data Collection in Mobile WYSP**
+
+The Mobile WYSP utilizes speed display signs strategically placed against existing hydro poles or streetlights. These units operate by:
+
+- Speed measurement: Radar devices continuously monitor the speeds of oncoming vehicles.
+
+- Real-time feedback: The measured speeds are displayed on LED signs to alert drivers, encouraging compliance with speed limits.
+
+- Deployment strategy: Portable units are rotated monthly across different wards throughout the year.
+
+This rotational deployment is the cornerstone of the program's sampling strategy, aiming to capture a diverse set of speed data across various geographical and temporal contexts within the city.
+
+**Sampling Design and Its Implications**
+
+1. Spatial Sampling:
+
+- Coverage across wards: By rotating the speed display signs monthly across different wards, the program ensures that multiple areas of the city are monitored over time. This spatial distribution helps in capturing variations in traffic patterns, speed behaviors, and the effectiveness of speed interventions across diverse neighborhoods.
+
+- Selection of installation sites: The choice of installation sites against hydro poles or streetlights is pragmatic, leveraging existing infrastructure for ease of deployment and maintenance. However, this might limit placements to areas with such infrastructure, potentially overlooking regions where these poles are scarce or absent.
+
+2. Temporal Sampling:
+
+- Monthly rotation: The monthly rotation allows the program to gather data across all wards within a year, accounting for seasonal variations in traffic and driving behaviors. This temporal breadth aids in understanding long-term trends and the impact of external factors (e.g., weather conditions, public events) on vehicle speeds.
+
+- Operational parameters: Each installation's operational period is finite, meaning data is collected only during the active months. This cyclical approach might miss transient or short-term speed fluctuations that occur between rotation periods.
+
+3. Sample Size and Frequency:
+
+- Number of vehicles counted: While the program collects data on vehicle speeds, it explicitly states that the count of vehicles is not equivalent to a traffic volume count. This indicates that while speed data is robust, the program may not comprehensively capture traffic density, potentially limiting analyses that require both speed and volume metrics.
+
+- Speed accuracy: With a stated accuracy of ±1 km/hr, the radar devices provide reasonably precise speed measurements. However, this margin of error must be considered when interpreting data, especially in contexts where small speed differences are significant for safety assessments.
+
+**Strengths of the Current Sampling Methodology**
+
+- Comprehensive geographic coverage: Monthly rotation ensures that all wards are periodically monitored, providing a broad spatial dataset that reflects diverse traffic conditions across the city.
+
+- Real-time feedback mechanism: The immediate display of vehicle speeds serves both as a data collection tool and a behavioral intervention, potentially enhancing the program's impact on reducing speeding incidents.
+
+- Adaptability and flexibility: Portable units allow for dynamic deployment, enabling the program to respond to emerging traffic issues or shifts in urban development patterns.
+
+- Longitudinal data collection: Over time, the repeated sampling across wards facilitates the analysis of trends, seasonal variations, and the long-term effectiveness of speed monitoring interventions.
+
+**Limitations and Challenges** 
+
+- Non-Random sampling bias: The placement of speed signs on existing hydro poles or streetlights may introduce spatial bias, as certain areas might have higher densities of such infrastructure, leading to overrepresentation of specific regions and underrepresentation of others.
+
+- Temporal gaps between rotations: Monthly rotations may not capture short-term speed variations or transient traffic conditions, potentially overlooking critical data points that occur between active monitoring periods.
+
+- Data completeness and volume: Since the vehicle count does not equate to traffic volume, analyses requiring both speed and volume data might face limitations. This gap restricts the ability to perform comprehensive traffic flow studies or correlate speed data with congestion levels.
+
+- Potential for data redundancy: Repeated measurements in the same wards over time could lead to data redundancy if not managed properly, affecting storage and processing efficiency.
+
+- Accuracy limitations: The ±1 km/hr speed accuracy, while generally acceptable, may pose challenges in high-precision studies, especially in urban environments where speed thresholds are critical for safety.
+
+**Recommendations for Enhancing Sampling Methodology**
+
+- Randomized site selection: Incorporating random sampling techniques in the selection of installation sites within each ward can mitigate spatial biases, ensuring a more representative data collection across diverse urban contexts.
+
+- Increasing temporal frequency: Enhancing the frequency of data collection within each ward, possibly through shorter rotation cycles or deploying multiple units simultaneously, can capture more granular temporal variations and transient traffic conditions.
+
+- Integrating traffic volume data: Combining speed data with traffic volume metrics, either through additional sensors or complementary data sources, can provide a more holistic understanding of traffic dynamics and enhance the program's analytical capabilities.
+
+- Leveraging data from permanent installations: Utilizing data from permanent speed monitoring installations, where available, can supplement the Mobile WYSP's data, filling gaps and providing continuity in long-term traffic monitoring.
+
+- Advanced data validation techniques: Implementing robust data validation and calibration processes can improve speed measurement accuracy, reducing the margin of error and enhancing the reliability of the collected data.
+
+- Engaging with the open data community: Collaborating with developers, policymakers, and civic advocates through the Open Data Portal can facilitate the creation of innovative tools and visualizations, improving data accessibility and utility for diverse stakeholders.
+
+**Conclusion**
+
+The Mobile Watch Your Speed Program's sampling methodology, characterized by spatial rotation and observational speed data collection, provides valuable insights into urban traffic behaviors across Toronto's wards. While the approach offers comprehensive geographic and temporal coverage, addressing inherent limitations through randomized sampling, increased data frequency, and integration with additional data sources can significantly enhance the program's effectiveness. As the City of Toronto continues to evolve its Open Data initiatives, refining the Mobile WYSP's sampling strategies will be pivotal in leveraging data-driven solutions for safer and more efficient urban mobility.
+
+\newpage
+
+
+# References
+
+
