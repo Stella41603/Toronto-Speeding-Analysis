@@ -96,3 +96,8 @@ saveRDS(
   Bayesian_model,
   file = "models/Bayesian_model.rds"
 )
+
+saveRDS(
+  Frequentist_model,
+  file = "models/Frequentist_model.rds"
+)

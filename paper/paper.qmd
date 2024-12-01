@@ -119,14 +119,14 @@ The goal of our modeling strategy is twofold. Firstly, we aim to understand the 
 Define $y_i$ as the median speed (in $\mathrm{km} / \mathrm{h}$ ) observed at location $i$. The predictors are $x_{1 i}$, the count of vehicles exceeding 100 km/h, and $x_{2 i}$, the traffic direction. Traffic direction is included as a set of dummy variables with Eastbound (EB) as the reference group. The model is specified as:
 
 $$
-\begin{gathered}
+\begin{aligned}
 y_i \mid \mu_i, \sigma \sim \operatorname{Normal}\left(\mu_i, \sigma\right) \\
 \mu_i=\alpha+\beta_1 x_{1 i}+\gamma_1 \mathrm{NB}_i+\gamma_2 \mathrm{SB}_i+\gamma_3 \mathrm{WB}_i \\
 \alpha \sim \operatorname{Normal}(0,2.5) \\
 \beta_1 \sim \operatorname{Normal}(0,2.5) \\
 \gamma_1, \gamma_2, \gamma_3 \sim \operatorname{Normal}(0,2.5) \\
 \sigma \sim \operatorname{Exponential}(1)
-\end{gathered}
+\end{aligned}
 $$
 
 Here, $\alpha$ represents the intercept (the expected median speed for Eastbound traffic when $x_{1 i}=0$ and the count of vehicles exceeding 100 km/h us 0), $\beta_1$ is the effect of the count of vehicles exceeding 100 km/h, and $\gamma_1, \gamma_2, \gamma_3$ are the effects of Northbound (NB), Southbound (SB), and Westbound (WB) directions compared to Eastbound (EB). The residual standard deviation $\sigma$ models the variability in the median speed unexplained by the predictors. These priors are weakly informative, centered at zero with modest variance, allowing the data to dominate the posterior estimates while discouraging extreme values.
@@ -240,11 +240,11 @@ In @fig-ppcheckandposteriorvsprior-2, we compare the posterior distributions (ri
 #| fig-cap: "Examining how the model fits, and is affected by, the data"
 #| fig-subcap: ["Posterior prediction check compares the observed data with predictions simulated from the model to evaluate the adequacy of fit.", "Comparison of posterior distributions with prior distributions illustrates how the data informs the parameter estimates."]
 
-pp_check(first_model) +
+pp_check(Bayesian_model) +
   theme_classic() +
   theme(legend.position = "bottom")
 
-posterior_vs_prior(first_model) +
+posterior_vs_prior(Bayesian_model) +
   theme_minimal() +
   scale_color_brewer(palette = "Set1") +
   theme(legend.position = "bottom") +
@@ -267,9 +267,9 @@ posterior_vs_prior(first_model) +
 #| fig-subcap: ["Trace plot showing consistent sampling across multiple chains for all model parameters, suggesting convergence.", "Rhat plot indicating that all parameters have Rhat values close to 1, confirming proper mixing and convergence of the chains."]
 #| layout-ncol: 2
 
-plot(first_model, "trace")
+plot(Bayesian_model, "trace")
 
-plot(first_model, "rhat")
+plot(Bayesian_model, "rhat")
 ```
 
 # Survey overview and methodology {#sec-survey-details}
