@@ -4,18 +4,19 @@
 # Date: 26 November 2024
 # Contact: xingjie.yao@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: Have "tidyverse" and "rstanarm“ packages installed and loaded
+# Pre-requisites: Have "tidyverse", "arrow , and "rstanarm“ packages installed and loaded
 # Any other information needed? Make sure you are in the MobileWatchYourSpeedProgramAnalysis .RPROJ environment
 
 #### Workspace setup ####
 library(tidyverse)
 library(rstanarm)
+library(arrow)
 
 #### Read data ####
 analysis_data <- read_parquet("data/02-analysis_data/analysis_data.parquet")
 
 ### Model data ####
-first_model <-
+Bayesian_model <-
   stan_glm(
     formula = pct_50 ~ direction + spd_100_and_above,
     data = analysis_data,
@@ -26,9 +27,11 @@ first_model <-
     seed = 853
   )
 
+Frequentist_model <- lm(pct_50 ~ direction + spd_100_and_above, data = analysis_data)
+
 
 #### Save model ####
 saveRDS(
-  first_model,
-  file = "models/first_model.rds"
+  Bayesian_model,
+  file = "models/Bayesian_model.rds"
 )

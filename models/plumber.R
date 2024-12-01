@@ -12,7 +12,7 @@ library(rstanarm)
 library(tidyverse)
 
 # Load the model
-model <- readRDS("first_model.rds")
+model <- readRDS("Bayesian_model.rds")
 
 # Define the model version
 version_number <- "0.0.1"
@@ -59,7 +59,7 @@ predict_median_speed <- function(spd_100_and_above = 500, direction = "NB") {
 
   # Store results
   result <- list(
-    "estimated_median_speed (km/h)" = mean_prediction
+    "estimated_median_speed (km/h)" = round(mean_prediction,0)
   )
 
   return(result)
