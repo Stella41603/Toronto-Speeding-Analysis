@@ -139,6 +139,14 @@ The chosen predictors, traffic direction and the count of vehicles exceeding 100
 
 Bayesian linear regression is well-suited for analyzing the continuous outcome of median speed, especially given its flexibility to incorporate prior information and quantify uncertainty in parameter estimates. Traffic direction is modeled using dummy variables to allow for direct comparison between the baseline (Eastbound) and other directions. This approach accounts for potential differences in road conditions, traffic patterns, or design features that vary by direction. The count of vehicles exceeding 100 km/h is included as a continuous predictor, hypothesized to positively correlate with median speed as locations with more speeding vehicles may also exhibit higher central tendencies in speed. The use of weakly informative priors ensures that the model is guided primarily by the observed data, providing robust and interpretable results while mitigating overfitting or extreme parameter estimates. This framework allows for a nuanced understanding of the factors shaping driver behavior across various locations and conditions.
 
+### Consideration of alternative models 
+
+To compare the prediction accuracy of the Bayesian and Frequentist regression models, the dataset was divided into a training set (80% of the data) and a testing set (20% of the data). Both models were trained on the training set using the same predictors: traffic direction and the count of vehicles exceeding 100 km/h. The Bayesian model incorporated prior beliefs about the parameter estimates, while the Frequentist model relied solely on the observed data for parameter estimation. After training, predictions were generated for the testing set. For the Bayesian model, predictions were derived by averaging the posterior predictive distributions for each observation, while for the Frequentist model, point predictions were directly calculated from the fitted parameters. Prediction accuracy was assessed using two metrics: Root Mean Squared Error (RMSE), which quantifies the average squared difference between predicted and observed values, and Mean Absolute Error (MAE), which measures the average absolute difference.
+
+The results indicate that both models performed almost identically in predicting median speeds. The Bayesian model achieved an RMSE of 9.603 and an MAE of 7.526, while the Frequentist model had an RMSE of 9.605 and an MAE of 7.528. These results suggest that both approaches captured the key patterns in the data with similar levels of accuracy. The slightly lower RMSE and MAE for the Bayesian model indicate a marginal advantage in prediction, potentially due to its ability to incorporate prior uncertainty into the modeling process. However, the differences between the two models are negligible, implying that either method could be effectively used for this analysis.
+
+The Bayesian model is preferred in this analysis for several reasons, despite the minimal differences in prediction accuracy. First, the Bayesian approach allows for the incorporation of prior information, which can help guide the estimation process, particularly in cases where data may be sparse or noisy. This can result in more robust and reliable parameter estimates, as the Bayesian framework explicitly accounts for uncertainty in both the data and the model parameters. Second, the Bayesian model provides a full posterior distribution for each parameter, enabling a richer interpretation of results and a clearer understanding of the uncertainty surrounding predictions. This is particularly advantageous for decision-making in contexts such as traffic safety, where understanding variability and risk is crucial. Lastly, the Bayesian model’s slightly lower RMSE and MAE, while small, suggest a better fit to the data, likely due to its ability to balance the influence of extreme values and outliers. For these reasons, the Bayesian model is selected as the final model for this analysis, as it offers not only comparable prediction accuracy but also a more nuanced and interpretable framework for addressing the research questions.
+
 # Results {#sec-results}
 
 Our results are summarized in @tbl-modelresults. The results of the Bayesian linear regression model provide insights into the factors influencing the median speed of vehicles at locations where speed display signs were installed. The intercept of 38.77 indicates that, on average, the median speed for Eastbound (EB) traffic is approximately 38.8 km/h when the count of vehicles exceeding 100 km/h is zero. This serves as the baseline for comparison with other directions.
@@ -157,8 +165,8 @@ The model explains approximately 12.9% of the variance in median speeds ( $R^2=0
 
 library(rstanarm)
 
-first_model <-
-  readRDS(file = here::here("models/first_model.rds"))
+Bayesian_model <-
+  readRDS(file = here::here("models/Bayesian_model.rds"))
 ```
 
 ```{r}
@@ -171,7 +179,7 @@ first_model <-
 
 modelsummary::modelsummary(
   list(
-    "Bayesian model" = first_model
+    "Bayesian model" = Bayesian_model
   ),
   statistic = "mad",
   fmt = 2
