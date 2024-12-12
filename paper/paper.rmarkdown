@@ -22,6 +22,8 @@ library(arrow)
 ```
 
 
+
+
 # Introduction
 
 Speeding behavior has long been a focus of traffic safety research, with studies highlighting the psychological and situational factors influencing drivers’ speed choices [@fildes1991speed]. Drivers’ attitudes toward risk, control, and perceived enforcement often play a critical role in determining whether they comply with speed limits or exceed them [@fildes1991speed]. Understanding these attitudes is essential for designing effective interventions that target both behavioral and environmental contributors to speeding [@fildes1991speed]. By situating these insights within the context of Toronto's WYSP, this study explores how structural factors, such as traffic direction, and behavioral tendencies, such as high-speed driving, shape observed speed patterns [@fildes1991speed]. Speed-related traffic accidents are a major concern in urban areas, prompting cities to explore interventions such as speed display signs to encourage safer driving behavior. The Mobile Watch Your Speed Program (WYSP) in Toronto rotates radar-equipped signs across various locations to remind drivers of their speeds and promote compliance with posted limits. Despite the program’s widespread use, the impact of these installations on traffic speed patterns has not been thoroughly analyzed. This paper investigates the relationship between traffic direction, high-speed vehicle prevalence, and median driving speeds at WYSP locations. By leveraging a Bayesian linear regression model, we aim to uncover patterns that can inform traffic management policies and improve road safety.
@@ -62,6 +64,8 @@ The outcome variable in this analysis is the median speed observed at each locat
 
 @fig-medianspeed displays the distribution of median speeds (50th percentile speeds) for vehicles across various monitored locations and directions (Eastbound, Northbound, Southbound, and Westbound). The x-axis represents the median speeds, measured in kilometers per hour (km/h), while the y-axis represents the count of observations falling within each speed range. The distribution is roughly bell-shaped, peaking between 30 and 50 km/h, indicating that most median speeds fall within this range. The data also shows a tapering off towards both extremes, with very few median speeds below 10 km/h or above 60 km/h. This pattern suggests that typical vehicle flow during the monitored period was moderate, with a few outliers exhibiting unusually low or high speeds. The histogram highlights the overall consistency in traffic behavior, but the presence of extreme values may indicate occasional disruptions or anomalies in traffic flow.
 
+
+
 ```{r}
 #| label: fig-medianspeed
 #| echo: false
@@ -80,6 +84,8 @@ ggplot(analysis_data, aes(x = pct_50)) +
   theme_minimal()
 ```
 
+
+
 ## Predictor variables
 
 ### Cardinal direction of travel
@@ -93,6 +99,8 @@ The count of vehicles exceeding 100 km/h serves as another critical predictor, r
 ## Relationship between variables
 
 @fig-bound presents the median speeds of vehicles across four cardinal directions: Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB). The median speeds appear relatively consistent across directions, with minor variations. Northbound (NB) and Southbound (SB) directions exhibit slightly broader interquartile ranges compared to Eastbound (EB) and Westbound (WB), indicating greater variability in vehicle speeds. Outliers in all directions represent occasional instances of vehicles traveling at either extremely low or high speeds, potentially influenced by traffic conditions or local environmental factors. These findings provide insights into directional trends in traffic flow and support the evaluation of speed limit sign effectiveness in managing vehicle speeds. The analysis complements a separate examination of high-speed violations, quantified as the count of vehicles observed exceeding 100 km/h at these locations.
+
+
 
 ```{r}
 #| label: fig-bound
@@ -112,7 +120,11 @@ ggplot(analysis_data, aes(x = direction, y = pct_50, fill = direction)) +
   theme(legend.position = "none")
 ```
 
+
+
 @fig-speeding shows how the count of vehicles exceeding 100 km/h correlates with the median speed observed at various locations, grouped by traffic direction. The majority of locations cluster around moderate counts of speeding vehicles (below 100) and median speeds between 40 and 60 km/h. However, a few outliers with higher counts of speeding vehicles (above 300) or extreme median speeds suggest localized conditions, such as high-speed corridors or unique traffic environments. The directional grouping reveals no obvious separation in trends across Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB), suggesting that speeding patterns are relatively uniform across directions. This analysis highlights the interplay between speeding behaviors and overall traffic flow characteristics, providing critical information for targeting interventions to improve traffic safety.
+
+
 
 ```{r}
 #| label: fig-speeding
@@ -131,6 +143,8 @@ ggplot(analysis_data, aes(x = spd_100_and_above, y = pct_50, color = direction))
   theme_minimal() +
   theme(legend.position = "right")
 ```
+
+
 
 # Model {#sec-model}
 
@@ -179,6 +193,8 @@ The count of vehicles exceeding 100 km/h (spd_100_and_above) has a positive and 
 
 The model explains approximately 12.9% of the variance in median speeds ( $R^2=0.129$ ), with an adjusted $R^2$ of 12.9%, indicating a modest but meaningful level of explanatory power. The root mean square error (RMSE) of 9.45 km/h suggests that the model's predictions deviate from the observed values by an average of about 9.45 km/h, reflecting some residual variability not captured by the predictors.
 
+
+
 ```{r}
 #| echo: false
 #| eval: true
@@ -207,6 +223,8 @@ modelsummary::modelsummary(
   fmt = 2
 )
 ```
+
+
 
 # Discussion {#sec-discussion}
 
@@ -254,6 +272,8 @@ In @fig-ppcheckandposteriorvsprior-1, we implement a posterior predictive check 
 
 In @fig-ppcheckandposteriorvsprior-2, we compare the posterior distributions (right panel) with the prior distributions (left panel) for the model parameters. The posterior distributions for the directional effects and the count of vehicles exceeding 100 km/h  are narrower and shifted compared to the priors, demonstrating that the data strongly informs these parameters. The intercept and residual variance $(\sigma)$ are similarly influenced by the data, indicating meaningful updates from the prior assumptions to reflect observed patterns. This comparison highlights the balance between prior information and data-driven inference in the Bayesian framework.
 
+
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -275,11 +295,15 @@ posterior_vs_prior(Bayesian_model) +
   coord_flip()
 ```
 
+
+
 ## Diagnostics
 
 @fig-stanareyouokay-1 is a trace plot. It shows the sampling chains for each parameter in the model over 1,000 iterations. Each parameter (e.g., intercept, direction, count of vehicles over 100 km/h, and residual variance) has multiple chains visualized, with different shades representing the chains. The overlapping and consistent patterns across chains suggest that the Markov Chain Monte Carlo (MCMC) algorithm has mixed well and reached convergence. The lack of significant drift or divergence indicates reliable and stable parameter estimates.
 
 @fig-stanareyouokay-2 is an Rhat plot. It shows the Gelman-Rubin diagnostic for each parameter, which compares the variance within and between chains. All Rhat values are close to 1, confirming that the chains have converged and that the model's posterior distribution is well-sampled. This suggests that the MCMC algorithm has performed adequately and the parameter estimates are robust and reliable.
+
+
 
 ```{r}
 #| echo: false
@@ -295,6 +319,8 @@ plot(Bayesian_model, "trace")
 
 plot(Bayesian_model, "rhat")
 ```
+
+
 
 # Survey overview and methodology {#sec-survey-details}
 
@@ -390,5 +416,6 @@ The Mobile Watch Your Speed Program's sampling methodology, characterized by spa
 
 
 # References
+
 
 

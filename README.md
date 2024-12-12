@@ -12,7 +12,7 @@ The repo is structured as:
 -   `data/simulated_data` contains the simulated dataset.
 -   `data/analysis_data` contains the cleaned dataset that was constructed.
 -   `model` contains fitted models and an API of the model for the user. 
--   `other` contains relevant literature, details about sketches.
+-   `other` contains relevant literature and sketches.
 -   `paper` contains the files used to generate the paper, including the Quarto document and reference bibliography file, as well as the PDF of the paper.
 -   `scripts` contains the R scripts used to simulate, download, clean, test, graph, and model the data.
 
