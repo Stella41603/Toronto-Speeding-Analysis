@@ -9,6 +9,7 @@ abstract: "This study investigates how traffic direction and high-speed vehicles
 format: pdf
 number-sections: true
 bibliography: references.bib
+toc: true
 ---
 
 ```{r}
@@ -37,9 +38,11 @@ The remainder of this paper is organized as follows. @sec-data provides an overv
 
 ## Overview
 
-For this analysis, we used the `R` programming language [@citeR] to explore data from the Mobile Watch Your Speed Program (WYSP) – Speed Summary in Toronto. The dataset, sourced from Toronto’s Open Data Portal [@opendatatoronto; @toronto_mobile_wysp], provides a summary of vehicle speeds observed at temporary speed display sign installations across the city. These signs are part of an initiative to remind motorists to obey speed limits by displaying their real-time speeds. Key aspects analyzed include the median speed observed during each installation, the count of vehicles exceeding 100 km/h, and the cardinal direction of traffic flow.
+For this analysis, we used the `R` programming language to explore data from the Mobile Watch Your Speed Program (WYSP) – Speed Summary in Toronto [@citeR]. The dataset, sourced from Toronto’s Open Data Portal, provides a summary of vehicle speeds observed at temporary speed display sign installations across the city [@opendatatoronto; @toronto_mobile_wysp]. These signs are part of an initiative to remind motorists to obey speed limits by displaying their real-time speeds. Key aspects analyzed include the median speed observed during each installation, the count of vehicles exceeding 100 km/h, and the cardinal direction of traffic flow.
 
-A variety of `R` packages were employed to streamline data manipulation, modeling, and visualization. The `tidyverse` suite served as the backbone for data processing, enabling efficient and reproducible workflows [@tidyverse]. File management was handled with `here`, ensuring consistent and reliable dataset access [@citehere]. Data cleaning was facilitated by `janitor`, which prepared the dataset for analysis [@citejanitor], while `testthat` validated the simulated and processed datasets, ensuring workflow integrity [@testthat]. Bayesian modeling, conducted using `rstanarm`, provided robust inference and clear probabilistic interpretations [@rstanarm]. Model summaries were generated with `modelsummary` for concise, intuitive reporting [@modelsummary]. Additionally, `arrow` ensured fast and memory-efficient handling of the dataset, critical for its scale and complexity [@citearrow]. Best practices in workflow organization, as outlined in @tellingstories, ensured transparency and reproducibility, integrating data cleaning, modeling, and visualization into a unified pipeline. This structured approach allowed for meaningful insights while supporting validation and future research extensions.
+A variety of `R` packages were employed to streamline data manipulation, modeling, and visualization. The `tidyverse` suite served as the backbone for data processing, enabling efficient and reproducible workflows [@tidyverse]. File management was handled with `here`, ensuring consistent and reliable dataset access [@citehere]. Data cleaning was facilitated by `janitor`, which prepared the dataset for analysis, while `testthat` validated the simulated and processed datasets, ensuring workflow integrity [@citejanitor; @testthat]. Bayesian modeling, conducted using `rstanarm`, provided robust inference and clear probabilistic interpretations [@rstanarm]. Model summaries were generated with `modelsummary` for concise, intuitive reporting [@modelsummary]. Additionally, `arrow` ensured fast and memory-efficient handling of the dataset, critical for its scale and complexity [@citearrow]. Best practices in workflow organizatio ensured transparency and reproducibility, integrating data cleaning, modeling, and visualization into a unified pipeline [@@tellingstories]. This structured approach allowed for meaningful insights while supporting validation and future research extensions.
+
+## Data source
   
 The dataset, sourced from Toronto’s Open Data Portal, underwent extensive cleaning to ensure its suitability for analysis. Key variables, such as the median speed (50th percentile), the count of vehicles exceeding 100 km/h, and the direction of travel, were retained, while irrelevant fields were excluded to streamline the dataset. Observations with missing or incomplete data were removed to uphold consistency and accuracy. Although alternative datasets, such as detailed hourly speed counts, were available, the WYSP summary dataset was selected for its clarity and direct relevance to evaluating driver compliance with speed limits. This focused dataset offered a concise yet comprehensive overview of observed speed patterns, supporting the analysis of program effectiveness. The rigorous cleaning process ensured that the dataset was well-prepared for modeling and interpretation, enabling a reliable assessment of how WYSP sign installations influence vehicle speeds and driver behavior.
 
@@ -56,6 +59,26 @@ However, there are limitations to this process that must be acknowledged. The da
 ## Outcome variable
 
 The outcome variable in this analysis is the median speed observed at each location where the speed display signs were installed. This variable represents the typical speed of vehicles passing the radar-equipped signs and provides a summary measure of driver behavior at that site. By focusing on the median speed, the analysis captures a central tendency that is less influenced by extreme outliers, offering a reliable indication of how most drivers behave under the influence of speed display signs.
+
+@fig-medianspeed displays the distribution of median speeds (50th percentile speeds) for vehicles across various monitored locations and directions (Eastbound, Northbound, Southbound, and Westbound). The x-axis represents the median speeds, measured in kilometers per hour (km/h), while the y-axis represents the count of observations falling within each speed range. The distribution is roughly bell-shaped, peaking between 30 and 50 km/h, indicating that most median speeds fall within this range. The data also shows a tapering off towards both extremes, with very few median speeds below 10 km/h or above 60 km/h. This pattern suggests that typical vehicle flow during the monitored period was moderate, with a few outliers exhibiting unusually low or high speeds. The histogram highlights the overall consistency in traffic behavior, but the presence of extreme values may indicate occasional disruptions or anomalies in traffic flow.
+
+```{r}
+#| label: fig-medianspeed
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-cap: Distribution of median speeds (km/h) for vehicles traveling in monitored directions during the installation of traffic signs. The distribution shows a concentration of median speeds between 30 and 50 km/h, with few instances of very low or high median speeds.
+
+analysis_data <- read_parquet(here::here("data/02-analysis_data/analysis_data.parquet"))
+
+ggplot(analysis_data, aes(x = pct_50)) +
+  geom_histogram(binwidth = 2, fill = "skyblue", color = "black") +
+  labs(
+    x = "Median Speed (km/h)",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
 
 ## Predictor variables
 
@@ -76,12 +99,11 @@ The count of vehicles exceeding 100 km/h serves as another critical predictor, r
 #| echo: false
 #| warning: false
 #| message: false
-#| fig-cap: The distribution of the median speeds, measured in kilometers per hour (km/h), for vehicles traveling in each cardinal direction Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB), at monitored locations during the installation of traffic signs.
-
-analysis_data <- read_parquet(here::here("data/02-analysis_data/analysis_data.parquet"))
+#| fig-cap: The distribution of median speeds (km/h) for vehicles traveling in each cardinal direction (EB, NB, SB, WB) at monitored locations during the installation of traffic signs. The results reveal variability in median speeds, with notable clustering around 50 km/h and some outliers indicating unusually high or low speeds.
 
 ggplot(analysis_data, aes(x = direction, y = pct_50, fill = direction)) +
-  geom_boxplot() +
+  geom_violin(trim = FALSE, alpha = 0.6) +  
+  geom_jitter(width = 0.1, alpha = 0.5, color = "black", size = 1.5) + 
   labs(
     x = "Direction",
     y = "Median speed (km/h)"
@@ -94,7 +116,7 @@ ggplot(analysis_data, aes(x = direction, y = pct_50, fill = direction)) +
 
 ```{r}
 #| label: fig-speeding
-#| fig-cap: Illustrating the relationship between the count of vehicles observed exceeding 100 km/h and the median speed, measured in kilometers per hour, for each cardinal direction, Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB).
+#| fig-cap: The relationship between the count of vehicles observed exceeding 100 km/h and the median speed, measured in kilometers per hour, for each cardinal direction: Eastbound (EB), Northbound (NB), Southbound (SB), and Westbound (WB). Higher counts of vehicles exceeding 100 km/h are generally associated with higher median speeds.
 #| echo: false
 #| warning: false
 #| message: false
@@ -220,7 +242,9 @@ Future research should consider exploring the interactions between high-speed dr
 
 # Appendix {-}
 
-# Additional data details
+# Data cleaning procedure
+
+The dataset was processed to focus on essential variables related to traffic patterns. The relevant columns for analysis—traffic direction, the count of vehicles traveling over 100 km/h, and the median speed—were selected. To ensure data consistency, only records corresponding to the four primary travel directions (Eastbound, Northbound, Southbound, and Westbound) were retained. Additionally, records where the count of high-speed vehicles exceeded 500 were excluded to mitigate the impact of extreme values. Any rows containing missing values in these selected columns were removed to ensure completeness. The cleaned dataset was then standardized by ensuring consistent column naming conventions and saved in a format suitable for further analysis.
 
 # Model details {#sec-model-details}
 
