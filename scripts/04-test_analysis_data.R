@@ -5,7 +5,7 @@
 # Contact: xingjie.yao@mail.utoronto.ca
 # License: MIT
 # Pre-requisites: Have "tidyverse" and "testthat" packages installed and loaded
-# Any other information needed? Make sure you are in the MobileWatchYourSpeedProgramAnalysis .RPROJ environment
+# Any other information needed? Make sure you are in the "Toronto_Speeding_Analysis.RPROJ" environment
 
 
 #### Workspace setup ####
